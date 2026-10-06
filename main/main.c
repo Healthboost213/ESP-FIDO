@@ -17,24 +17,47 @@
 static const char *TAG = "Hello";
 static led_strip_handle_t led_strip;
 
-static void configure_usb(void) {
+const uint8_t hid_report_descriptor[] = {
+    TUD_HID_REPORT_DESC_FIDO_U2F(64)
+};
 
-    const uint8_t hid_report_descriptor[] = {
-        TUD_HID_REPORT_DESC_FIDO_U2F(64)
+const char* hid_string_descriptor[5] = {
+    (char[]){0x09, 0x04},
+    "healthboost213",
+    "ESPFIDO",
+    "1337",
+    "FIDO2 HID Device"
+};
+
+const uint8_t hid_config_descriptor[] = {
+    TUD_CONFIG_DESCRIPTOR(1, 1, 0, USB_TOTAL_LEN, 0, 100),
+    TUD_HID_INOUT_DESCRIPTOR(0, 0, HID_ITF_PROTOCOL_NONE, sizeof(hid_report_descriptor), 0x01, 0x81, 64, 5)
+};
+
+uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance)
+{
+    return hid_report_descriptor;
+}
+
+static esp_err_t configure_usb(void) {
+
+    ESP_LOGI(TAG, "USB Initialisation Starting...");
+
+    const tinyusb_config_t usb_conf = {
+        .string_descriptor = hid_string_descriptor,
+        .string_descriptor_count = sizeof(hid_string_descriptor) / sizeof(hid_string_descriptor[0]),
+        .configuration_descriptor = hid_config_descriptor,
+        .external_phy = false,
+        .self_powered = false
     };
 
-    const char *hid_string_descriptor[5] = {
-        (char[]){0x09, 0x04},
-        "healthboost213",
-        "ESPFIDO",
-        "1337",
-        "FIDO2 HID Device"
+    esp_err_t status = tinyusb_driver_install(&usb_conf);
+
+    if (status == ESP_OK) {
+        ESP_LOGI(TAG, "USB Initialisation Successful");
     };
 
-    const uint8_t hid_config_descriptor[] = {
-        TUD_CONFIG_DESCRIPTOR(1, 1, 0, USB_TOTAL_LEN, 0, 100),
-        TUD_HID_INOUT_DESCRIPTOR(0, 0, HID_ITF_PROTOCOL_NONE, sizeof(hid_report_descriptor), 0x01, 0x81, 64, 5)
-    };
+    return status;
 
 }
 
@@ -73,19 +96,16 @@ static void configure_led(void) {
 
 void app_main(void) {
 
+    esp_err_t value = configure_usb();
     configure_button();
     configure_led();
 
     while (1) {
 
-        int gpio_status = gpio_get_level(BOOT_BUTTON_PIN);
-
-        if (gpio_status == 0) {
-            ESP_LOGI(TAG, "Button Held");
+        if (value == ESP_OK) {
             led_strip_set_pixel(led_strip, 0, 0, 25,0);
             led_strip_refresh(led_strip);
         } else {
-            ESP_LOGI(TAG, "Button Released");
             led_strip_set_pixel(led_strip, 0, 25, 0,0);
             led_strip_refresh(led_strip);
         }

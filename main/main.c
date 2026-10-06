@@ -12,17 +12,28 @@
 #define LED_GPIO_PIN GPIO_NUM_48
 #define MAX_LED 1
 
+#define USB_TOTAL_LEN (TUD_CONFIG_DESC_LEN + CFG_TUD_HID * TUD_HID_INOUT_DESC_LEN)
+
 static const char *TAG = "Hello";
 static led_strip_handle_t led_strip;
 
 static void configure_usb(void) {
 
     const uint8_t hid_report_descriptor[] = {
-        0x06, 0xD0, 0xF1, // HID Usage Page
-        0x09, 0x01, // HID Usage
-        0xA1, 0x01, // HID Collection
+        TUD_HID_REPORT_DESC_FIDO_U2F(64)
+    };
 
+    const char *hid_string_descriptor[5] = {
+        (char[]){0x09, 0x04},
+        "healthboost213",
+        "ESPFIDO",
+        "1337",
+        "FIDO2 HID Device"
+    };
 
+    const uint8_t hid_config_descriptor[] = {
+        TUD_CONFIG_DESCRIPTOR(1, 1, 0, USB_TOTAL_LEN, 0, 100),
+        TUD_HID_INOUT_DESCRIPTOR(0, 0, HID_ITF_PROTOCOL_NONE, sizeof(hid_report_descriptor), 0x01, 0x81, 64, 5)
     };
 
 }

@@ -12,7 +12,7 @@
 #define LED_GPIO_PIN GPIO_NUM_48
 #define MAX_LED 1
 
-#define USB_TOTAL_LEN (TUD_CONFIG_DESC_LEN + CFG_TUD_HID * TUD_HID_INOUT_DESC_LEN)
+#define USB_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_HID_INOUT_DESC_LEN)
 
 static const char *TAG = "Hello";
 static led_strip_handle_t led_strip;
@@ -31,13 +31,33 @@ const char* hid_string_descriptor[5] = {
 
 const uint8_t hid_config_descriptor[] = {
     TUD_CONFIG_DESCRIPTOR(1, 1, 0, USB_TOTAL_LEN, 0, 100),
-    TUD_HID_INOUT_DESCRIPTOR(0, 0, HID_ITF_PROTOCOL_NONE, sizeof(hid_report_descriptor), 0x01, 0x81, 64, 5)
+    TUD_HID_INOUT_DESCRIPTOR(0, 0, HID_ITF_PROTOCOL_NONE, sizeof(hid_report_descriptor), 0x02, 0x82, 64, 5)
 };
 
 uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance)
 {
+    ESP_LOGI(TAG, "Succesful Report");
     return hid_report_descriptor;
 }
+
+uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen) {
+
+    (void) instance;
+    (void) report_id;
+    (void) report_type;
+    (void) buffer;
+    (void) reqlen;
+
+    return 0;
+};
+
+void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize) {
+
+    (void) instance;
+    (void) report_id;
+    (void) report_type;
+
+};
 
 static esp_err_t configure_usb(void) {
 

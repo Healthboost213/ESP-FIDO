@@ -3,3 +3,4 @@ managed_components/
 cmake-build-esp-debug/
 dependencies.lock
 sdkconfig
+build
